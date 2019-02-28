@@ -33,7 +33,7 @@ namespace WaveSabrePlayerLib
 			midiLanes[i] = new MidiLane;
 			int numEvents = readInt();
 			midiLanes[i]->numEvents = numEvents;
-			midiLanes[i]->events = new Event[numEvents];
+			midiLanes[i]->events = (Event *)malloc(sizeof(Event) * numEvents);
 			for (int m = 0; m < numEvents; m++)
 			{
 				midiLanes[i]->events[m].TimeStamp = readInt();
@@ -103,7 +103,7 @@ namespace WaveSabrePlayerLib
 		free(devices);
 
 		for (int i = 0; i < numMidiLanes; i++) {
-			delete midiLanes[i]->events;
+			free(midiLanes[i]->events);
 			delete midiLanes[i];
 		}
 		free(midiLanes);
