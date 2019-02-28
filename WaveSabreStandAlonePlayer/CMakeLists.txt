@@ -1,0 +1,2 @@
+add_executable(WaveSabreStandAlonePlayer main.cpp)
+target_link_libraries(WaveSabreStandAlonePlayer WaveSabrePlayerLib)
