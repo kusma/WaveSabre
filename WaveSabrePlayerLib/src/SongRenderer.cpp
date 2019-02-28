@@ -15,7 +15,7 @@ namespace WaveSabrePlayerLib
 		length = readDouble();
 
 		numDevices = readInt();
-		devices = new Device *[numDevices];
+		devices = (Device **)malloc(sizeof(Device *) * numDevices);
 		for (int i = 0; i < numDevices; i++)
 		{
 			devices[i] = song->factory((DeviceId)readByte());
@@ -27,7 +27,7 @@ namespace WaveSabrePlayerLib
 		}
 
 		numMidiLanes = readInt();
-		midiLanes = new MidiLane *[numMidiLanes];
+		midiLanes = (MidiLane **)malloc(sizeof(MidiLane *) * numMidiLanes);
 		for (int i = 0; i < numMidiLanes; i++)
 		{
 			midiLanes[i] = new MidiLane;
@@ -54,8 +54,8 @@ namespace WaveSabrePlayerLib
 		}
 
 		numTracks = readInt();
-		tracks = new Track *[numTracks];
-		trackRenderStates = new TrackRenderState[numTracks];
+		tracks = (Track **)malloc(sizeof(Track *) * numTracks);
+		trackRenderStates = (TrackRenderState *)malloc(sizeof(TrackRenderState) * numTracks);
 		for (int i = 0; i < numTracks; i++)
 		{
 			tracks[i] = new Track(this, song->factory);
@@ -65,7 +65,7 @@ namespace WaveSabrePlayerLib
 		this->numRenderThreads = numRenderThreads;
 
 		renderThreadShutdown = false;
-		renderThreadStartEvents = new HANDLE[numRenderThreads];
+		renderThreadStartEvents = (HANDLE *)malloc(sizeof(HANDLE) * numRenderThreads);
 		for (int i = 0; i < numRenderThreads; i++)
 			renderThreadStartEvents[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 		renderDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -100,23 +100,23 @@ namespace WaveSabrePlayerLib
 		}
 
 		for (int i = 0; i < numDevices; i++) delete devices[i];
-		delete [] devices;
+		free(devices);
 
 		for (int i = 0; i < numMidiLanes; i++) {
 			delete midiLanes[i]->events;
 			delete midiLanes[i];
 		}
-		delete [] midiLanes;
+		free(midiLanes);
 
 		for (int i = 0; i < numTracks; i++) delete tracks[i];
-		delete [] tracks;
-		delete [] trackRenderStates;
+		free(tracks);
+		free(trackRenderStates);
 
 		for (int i = 0; i < numRenderThreads; i++)
 			CloseHandle(renderThreadStartEvents[i]);
 		CloseHandle(renderDoneEvent);
 
-		delete [] renderThreadStartEvents;
+		free(renderThreadStartEvents);
 	}
 
 	void SongRenderer::RenderSamples(Sample *buffer, int numSamples)
