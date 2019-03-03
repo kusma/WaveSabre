@@ -1,0 +1,8 @@
+file(GLOB children RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+foreach(child ${children})
+	if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${child})
+		file(GLOB sources ${CMAKE_CURRENT_SOURCE_DIR}/${child}/*.cpp)
+		add_library(${child} SHARED ${sources})
+		target_link_libraries(${child} WaveSabreCore WaveSabreVstLib)
+	endif()
+endforeach()
