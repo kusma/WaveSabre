@@ -4,6 +4,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#ifdef LGCM_MAC
+    #define fpuPow pow
+    #define fpuPowF powf
+    #define fpuCos cos
+#else
 static __declspec(naked) double __vectorcall fpuPow(double x, double y)
 {
 	__asm
@@ -117,6 +122,7 @@ static __declspec(naked) double __vectorcall fpuCos(double x)
 		ret
 	}
 }
+#endif
 
 namespace WaveSabreCore
 {

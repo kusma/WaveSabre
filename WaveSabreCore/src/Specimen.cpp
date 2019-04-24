@@ -3,9 +3,15 @@
 
 #include <math.h>
 
+#ifdef LGCM_MAC
+#include <string.h>
+#endif
+
 namespace WaveSabreCore
 {
+#ifndef LGCM_MAC
 	HACMDRIVERID Specimen::driverId = NULL;
+#endif
 
 	Specimen::Specimen()
 		: SynthDevice(0)
@@ -240,6 +246,7 @@ namespace WaveSabreCore
 		compressedData = new char[compressedSize];
 		memcpy(compressedData, data, compressedSize);
 
+#ifndef LGCM_MAC
 		acmDriverEnum(driverEnumCallback, NULL, NULL);
 		HACMDRIVER driver = NULL;
 		acmDriverOpen(&driver, driverId, 0);
@@ -282,6 +289,26 @@ namespace WaveSabreCore
 		sampleLoopLength = sampleLength;
 
 		delete [] uncompressedData;
+#else
+		size_t tmpWavSize = 0;
+		unsigned char *tmpWav = MacOSHelpers::BuildWAV((unsigned char *)data, compressedSize, &tmpWavSize);
+
+		size_t decodedSize = 0;
+		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM(false, tmpWav, tmpWavSize, &decodedSize);
+		if (!uncompressedData)
+		{
+			delete [] tmpWav;
+			return;
+		}
+		delete [] tmpWav;
+
+		sampleLength = decodedSize / sizeof(short);
+		if (sampleData) delete [] sampleData;
+		sampleData = new float[sampleLength];
+		for (int i = 0; i < sampleLength; i++) sampleData[i] = (float)((double)uncompressedData[i] / 32768.0);
+
+		delete [] uncompressedData;
+#endif
 	}
 
 	Specimen::SpecimenVoice::SpecimenVoice(Specimen *specimen)
@@ -391,6 +418,7 @@ namespace WaveSabreCore
 		samplePlayer.CalcPitch(GetNote() - 60 + Detune + specimen->fineTune * 2.0f - 1.0f + SpecimenVoice::coarseDetune(specimen->coarseTune));
 	}
 
+#ifndef LGCM_MAC
 	BOOL __stdcall Specimen::driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport)
 	{
 		if (Specimen::driverId) return 1;
@@ -427,4 +455,5 @@ namespace WaveSabreCore
 		}
 		return 1;
 	}
+#endif
 }

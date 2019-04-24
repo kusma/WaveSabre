@@ -2,6 +2,10 @@
 
 #include <WaveSabreCore/Helpers.h>
 
+#ifndef LGCM_MAC
+#include <Windows.h>
+#endif
+
 namespace WaveSabreCore
 {
 	SynthDevice::SynthDevice(int numParams)

@@ -3,9 +3,15 @@
 
 #include <math.h>
 
+#ifdef LGCM_MAC
+#include <string.h>
+#endif
+
 namespace WaveSabreCore
 {
+#ifndef LGCM_MAC
 	HACMDRIVERID Thunder::driverId = NULL;
+#endif
 
 	Thunder::Thunder()
 		: SynthDevice(0)
@@ -74,6 +80,7 @@ namespace WaveSabreCore
 		compressedData = new char[compressedSize];
 		memcpy(compressedData, data, compressedSize);
 
+#ifndef LGCM_MAC
 		acmDriverEnum(driverEnumCallback, NULL, NULL);
 		HACMDRIVER driver = NULL;
 		acmDriverOpen(&driver, driverId, 0);
@@ -113,6 +120,29 @@ namespace WaveSabreCore
 		for (int i = 0; i < sampleLength; i++) sampleData[i] = (float)((double)uncompressedData[i] / 32768.0);
 
 		delete [] uncompressedData;
+#else
+		size_t tmpWavSize = 0;
+		unsigned char *tmpWav = MacOSHelpers::BuildWAV((unsigned char *)data, compressedSize, &tmpWavSize);
+
+
+		size_t decodedSize = 0;
+		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM(false, tmpWav, tmpWavSize, &decodedSize);
+		if (!uncompressedData)
+		{
+			MacOSHelpers::LogError("PCMToGSM: could not decode chunk.");
+			delete [] tmpWav;
+			return;
+		}
+		delete [] tmpWav;
+
+
+		sampleLength = decodedSize / sizeof(short);
+		if (sampleData) delete [] sampleData;
+		sampleData = new float[sampleLength];
+		for (int i = 0; i < sampleLength; i++) sampleData[i] = (float)((double)uncompressedData[i] / 32768.0);
+
+		delete [] uncompressedData;
+#endif
 	}
 
 	Thunder::ThunderVoice::ThunderVoice(Thunder *thunder)
@@ -147,6 +177,7 @@ namespace WaveSabreCore
 		samplePos = 0;
 	}
 
+#ifndef LGCM_MAC
 	BOOL __stdcall Thunder::driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport)
 	{
 		if (Thunder::driverId) return 1;
@@ -183,4 +214,5 @@ namespace WaveSabreCore
 		}
 		return 1;
 	}
+#endif
 }

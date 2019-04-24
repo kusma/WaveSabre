@@ -9,9 +9,11 @@ using namespace WaveSabreCore;
 #include <exception>
 using namespace std;
 
+#ifndef LGCM_MAC
 #include <Windows.h>
 
 HACMDRIVERID SpecimenEditor::driverId = NULL;
+#endif
 WAVEFORMATEX *SpecimenEditor::foundWaveFormat = nullptr;
 
 SpecimenEditor::SpecimenEditor(AudioEffect *audioEffect)
@@ -19,7 +21,9 @@ SpecimenEditor::SpecimenEditor(AudioEffect *audioEffect)
 {
 	pressedTheFuck = false;
 
+#ifndef LGCM_MAC
 	fileSelector = nullptr;
+#endif
 
 	specimen = ((SpecimenVst *)audioEffect)->GetSpecimen();
 }
@@ -30,7 +34,9 @@ SpecimenEditor::~SpecimenEditor()
 
 void SpecimenEditor::Open()
 {
+#ifndef LGCM_MAC
 	if (!fileSelector) fileSelector = new CFileSelector(nullptr);
+#endif
 
 	addSpacer();
 	addButton(1000, "LOAD SAMPLE");
@@ -107,6 +113,7 @@ void SpecimenEditor::setParameter(VstInt32 index, float value)
 		pressedTheFuck = value != 0.0f;
 		if (pressedTheFuck != oldValue && oldValue)
 		{
+#ifndef LGCM_MAC
 			VstFileSelect vfs;
 			memset(&vfs, 0, sizeof(vfs));
 			vfs.command = kVstFileLoad;
@@ -202,6 +209,23 @@ void SpecimenEditor::setParameter(VstInt32 index, float value)
 					MessageBoxA(0, e.what(), "FUCK THAT SHIT", MB_OK | MB_ICONEXCLAMATION);
 				}
 			}
+#else
+			CNewFileSelector* selector = CNewFileSelector::create(getFrame(), CNewFileSelector::kSelectFile);
+			if (selector)
+			{
+				selector->setDefaultExtension(CFileExtension("WAVE", "wav"));
+				selector->setAllowMultiFileSelection(false);
+				selector->setTitle("Choose An Audio File");
+				if (selector->runModal())
+				{
+					const char* path = selector->getSelectedFile(0);
+					if (path)
+					{
+					}
+				}
+				selector->forget();
+			}
+#endif
 		}
 	}	else
 	{
@@ -210,6 +234,7 @@ void SpecimenEditor::setParameter(VstInt32 index, float value)
 
 }
 
+#ifndef LGCM_MAC
 BOOL __stdcall SpecimenEditor::driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport)
 {
 	ACMDRIVERDETAILS driverDetails;
@@ -248,3 +273,4 @@ BOOL __stdcall SpecimenEditor::formatEnumCallback(HACMDRIVERID driverId, LPACMFO
 
 	return 1;
 }
+#endif

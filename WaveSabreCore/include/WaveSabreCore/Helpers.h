@@ -1,6 +1,7 @@
 #ifndef __WAVESABRECORE_HELPERS_H__
 #define __WAVESABRECORE_HELPERS_H__
 
+#include "MacOSHelpers.h"
 #include "StateVariableFilter.h"
 #include "Twister.h"
 #include "SynthDevice.h"

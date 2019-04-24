@@ -5,7 +5,9 @@
 #include "Envelope.h"
 #include "StateVariableFilter.h"
 #include "SamplePlayer.h"
+#include "MacOSHelpers.h"
 
+#ifndef LGCM_MAC
 #include <Windows.h>
 #include <mmreg.h>
 
@@ -13,6 +15,7 @@
 #define _UNICODE
 #endif
 #include <MSAcm.h>
+#endif
 
 namespace WaveSabreCore
 {
@@ -98,12 +101,12 @@ namespace WaveSabreCore
 
 			float velocity;
 		};
-
+#ifndef LGCM_MAC
 		static BOOL __stdcall driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport);
 		static BOOL __stdcall formatEnumCallback(HACMDRIVERID driverId, LPACMFORMATDETAILS formatDetails, DWORD dwInstance, DWORD fdwSupport);
 
 		static HACMDRIVERID driverId;
-
+#endif
 		char *chunkData;
 
 		char *waveFormatData;
