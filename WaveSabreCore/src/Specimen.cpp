@@ -290,11 +290,8 @@ namespace WaveSabreCore
 
 		delete [] uncompressedData;
 #else
-		size_t tmpWavSize = 0;
-		unsigned char *tmpWav = MacOSHelpers::BuildWAV((unsigned char *)data, compressedSize, &tmpWavSize);
-
 		size_t decodedSize = 0;
-		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM(tmpWav, tmpWavSize, &decodedSize);
+		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM((unsigned char *)data, compressedSize, &decodedSize);
 		if (!uncompressedData)
 		{
 			delete [] tmpWav;

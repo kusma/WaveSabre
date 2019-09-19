@@ -211,7 +211,7 @@ namespace WaveSabreCore
 		
 		SF_INFO sfinfo;
 		memset (&sfinfo, 0, sizeof(sfinfo));
-		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_GSM610;
+		sfinfo.format = SF_FORMAT_RAW | SF_FORMAT_GSM610;
 
 		SNDFILE *in_file = sf_open_virtual(&vio, SFM_READ, &sfinfo, &vio_in_data);
 		if (in_file == NULL)
@@ -259,33 +259,6 @@ namespace WaveSabreCore
 		sf_close(out_file);
 		sf_close(in_file);
 
-		return out_data;
-	}
-
-	unsigned char *MacOSHelpers::BuildWAV(const unsigned char *in_data, size_t in_size, size_t *out_size)
-	{
-		*out_size = sizeof(WavHeader) + in_size;
-		auto out_data = new unsigned char[*out_size];
-		WavHeader *wh = (WavHeader *)out_data;
-		wh->ChunkID = 0x46464952; // "RIFF"
-		wh->ChunkSize = *out_size - 8; // rest
-		wh->Format = 0x45564157; // "WAVE"
-		wh->Subchunk1ID = 0x20746d66; // "fmt "
-		wh->Subchunk1Size = 20; // 16 for PCM, rest
-		wh->Fmt.wFormatTag = GSM610_WAVE_FORMAT;
-		wh->Fmt.nChannels = 1;
-		wh->Fmt.nSamplesPerSec = LGCM_SAMPLE_RATE;
-		wh->Fmt.nAvgBytesPerSec = LGCM_SAMPLE_RATE * GSM610_BLOCKSIZE / GSM610_SAMPLES;
-		wh->Fmt.nBlockAlign = GSM610_BLOCKSIZE;
-		wh->Fmt.wBitsPerSample = 0;
-		wh->Fmt.cbSize = 2;
-		wh->Pad = 0x140; // <- eeeeh, horrible Note(alkama): dont know what it's about, but it fails if it's not there
-		wh->Subchunk2ID = 0x61746164; // "data"
-		wh->Subchunk2Size = in_size; // rest
-		
-		unsigned char *data = out_data+sizeof(WavHeader);
-		memcpy(data, in_data, in_size);
-		
 		return out_data;
 	}
 }
