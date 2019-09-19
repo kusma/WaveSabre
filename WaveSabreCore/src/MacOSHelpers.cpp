@@ -197,7 +197,7 @@ namespace WaveSabreCore
 		return true;
 	}
 	
-	unsigned char *MacOSHelpers::PCMToGSM(bool do_encode, const unsigned char *in_data, size_t in_size, size_t *out_size)
+	unsigned char *MacOSHelpers::PCMToGSM(const unsigned char *in_data, size_t in_size, size_t *out_size)
 	{
 		if (in_size > LGCM_MAX_SAMPLE_SIZE) {
 			LogError("PCMToGSM: input is too big.");
@@ -211,14 +211,7 @@ namespace WaveSabreCore
 		
 		SF_INFO sfinfo;
 		memset (&sfinfo, 0, sizeof(sfinfo));
-		if (do_encode)
-		{
-			sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;
-		}
-		else
-		{
-			sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_GSM610;
-		}
+		sfinfo.format = SF_FORMAT_WAV | SF_FORMAT_GSM610;
 
 		SNDFILE *in_file = sf_open_virtual(&vio, SFM_READ, &sfinfo, &vio_in_data);
 		if (in_file == NULL)
@@ -237,14 +230,7 @@ namespace WaveSabreCore
 		
 		sfinfo.samplerate = LGCM_SAMPLE_RATE;
 		sfinfo.channels = 1;
-		if (do_encode)
-		{
-			sfinfo.format = SF_FORMAT_RAW | SF_FORMAT_GSM610;
-		}
-		else
-		{
-			sfinfo.format = SF_FORMAT_RAW | SF_FORMAT_PCM_16;
-		}
+		sfinfo.format = SF_FORMAT_RAW | SF_FORMAT_PCM_16;
 
 		static VioData vio_out_data;
 		memset (&vio_out_data, 0, sizeof(vio_out_data));

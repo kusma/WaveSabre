@@ -29,7 +29,7 @@ namespace WaveSabreCore
 		static void ChangeToResourcesDirectory();
 		static unsigned char *LoadFile(const char *filename);
 		static bool SaveFile(const char *filename, const unsigned char *data, size_t size);
-		static unsigned char *PCMToGSM(bool do_encode, const unsigned char *in_data, size_t in_size, size_t *out_size);
+		static unsigned char *PCMToGSM(const unsigned char *in_data, size_t in_size, size_t *out_size);
 		static unsigned char *BuildWAV(const unsigned char *in_data, size_t in_size, size_t *out_size);
 	};
 }

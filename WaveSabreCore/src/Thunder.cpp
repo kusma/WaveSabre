@@ -126,7 +126,7 @@ namespace WaveSabreCore
 
 
 		size_t decodedSize = 0;
-		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM(false, tmpWav, tmpWavSize, &decodedSize);
+		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM(tmpWav, tmpWavSize, &decodedSize);
 		if (!uncompressedData)
 		{
 			MacOSHelpers::LogError("PCMToGSM: could not decode chunk.");
