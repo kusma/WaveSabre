@@ -10,10 +10,14 @@ endif()
 
 # shared code
 add_subdirectory(WaveSabreCore)
-add_subdirectory(WaveSabrePlayerLib)
-add_subdirectory(WaveSabreVstLib)
+if(WIN32)
+	add_subdirectory(WaveSabrePlayerLib)
+	add_subdirectory(WaveSabreVstLib)
+endif()
 
 # binaries
-add_subdirectory(Tests/PlayerTest)
-add_subdirectory(WaveSabreStandAlonePlayer)
-add_subdirectory(Vsts)
+if(WIN32)
+	add_subdirectory(Tests/PlayerTest)
+	add_subdirectory(WaveSabreStandAlonePlayer)
+	add_subdirectory(Vsts)
+endif()
