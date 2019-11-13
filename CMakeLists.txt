@@ -8,6 +8,12 @@ if(MSVC)
 	string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 endif()
 
+if (NOT WIN32)
+	# we need libsndfile
+	find_package(PkgConfig)
+	pkg_check_modules(SNDFILE REQUIRED sndfile)
+endif()
+
 # shared code
 add_subdirectory(WaveSabreCore)
 if(WIN32)
