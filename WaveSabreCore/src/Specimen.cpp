@@ -3,10 +3,51 @@
 
 #include <math.h>
 
+#ifndef USE_SNDFILE
+
+HACMDRIVERID Specimen::driverId = NULL;
+
+static BOOL __stdcall driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport)
+{
+	if (driverId) return 1;
+
+	HACMDRIVER driver = NULL;
+	acmDriverOpen(&driver, driverId, 0);
+
+	int waveFormatSize = 0;
+	acmMetrics(NULL, ACM_METRIC_MAX_SIZE_FORMAT, &waveFormatSize);
+	auto waveFormat = (WAVEFORMATEX *)(new char[waveFormatSize]);
+	memset(waveFormat, 0, waveFormatSize);
+	ACMFORMATDETAILS formatDetails;
+	memset(&formatDetails, 0, sizeof(formatDetails));
+	formatDetails.cbStruct = sizeof(formatDetails);
+	formatDetails.pwfx = waveFormat;
+	formatDetails.cbwfx = waveFormatSize;
+	formatDetails.dwFormatTag = WAVE_FORMAT_UNKNOWN;
+	acmFormatEnum(driver, &formatDetails, formatEnumCallback, NULL, NULL);
+
+	delete [] (char *)waveFormat;
+
+	acmDriverClose(driver, 0);
+
+	return 1;
+}
+
+static BOOL __stdcall formatEnumCallback(HACMDRIVERID id, LPACMFORMATDETAILS formatDetails, DWORD dwInstance, DWORD fdwSupport)
+{
+	if (formatDetails->pwfx->wFormatTag == WAVE_FORMAT_GSM610 &&
+		formatDetails->pwfx->nChannels == 1 &&
+		formatDetails->pwfx->nSamplesPerSec == SampleRate)
+	{
+		driverId = id;
+	}
+	return 1;
+}
+
+#endif
+
 namespace WaveSabreCore
 {
-	HACMDRIVERID Specimen::driverId = NULL;
-
 	Specimen::Specimen()
 		: SynthDevice(0)
 	{
@@ -240,6 +281,7 @@ namespace WaveSabreCore
 		compressedData = new char[compressedSize];
 		memcpy(compressedData, data, compressedSize);
 
+#ifndef USE_SNDFILE
 		acmDriverEnum(driverEnumCallback, NULL, NULL);
 		HACMDRIVER driver = NULL;
 		acmDriverOpen(&driver, driverId, 0);
@@ -282,6 +324,26 @@ namespace WaveSabreCore
 		sampleLoopLength = sampleLength;
 
 		delete [] uncompressedData;
+#else
+		size_t tmpWavSize = 0;
+		unsigned char *tmpWav = MacOSHelpers::BuildWAV((unsigned char *)data, compressedSize, &tmpWavSize);
+
+		size_t decodedSize = 0;
+		short *uncompressedData = (short *)MacOSHelpers::PCMToGSM(false, tmpWav, tmpWavSize, &decodedSize);
+		if (!uncompressedData)
+		{
+			delete [] tmpWav;
+			return;
+		}
+		delete [] tmpWav;
+
+		sampleLength = decodedSize / sizeof(short);
+		if (sampleData) delete [] sampleData;
+		sampleData = new float[sampleLength];
+		for (int i = 0; i < sampleLength; i++) sampleData[i] = (float)((double)uncompressedData[i] / 32768.0);
+
+		delete [] uncompressedData;
+#endif
 	}
 
 	Specimen::SpecimenVoice::SpecimenVoice(Specimen *specimen)
@@ -389,42 +451,5 @@ namespace WaveSabreCore
 	void Specimen::SpecimenVoice::calcPitch()
 	{
 		samplePlayer.CalcPitch(GetNote() - 60 + Detune + specimen->fineTune * 2.0f - 1.0f + SpecimenVoice::coarseDetune(specimen->coarseTune));
-	}
-
-	BOOL __stdcall Specimen::driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport)
-	{
-		if (Specimen::driverId) return 1;
-
-		HACMDRIVER driver = NULL;
-		acmDriverOpen(&driver, driverId, 0);
-
-		int waveFormatSize = 0;
-		acmMetrics(NULL, ACM_METRIC_MAX_SIZE_FORMAT, &waveFormatSize);
-		auto waveFormat = (WAVEFORMATEX *)(new char[waveFormatSize]);
-		memset(waveFormat, 0, waveFormatSize);
-		ACMFORMATDETAILS formatDetails;
-		memset(&formatDetails, 0, sizeof(formatDetails));
-		formatDetails.cbStruct = sizeof(formatDetails);
-		formatDetails.pwfx = waveFormat;
-		formatDetails.cbwfx = waveFormatSize;
-		formatDetails.dwFormatTag = WAVE_FORMAT_UNKNOWN;
-		acmFormatEnum(driver, &formatDetails, formatEnumCallback, NULL, NULL);
-
-		delete [] (char *)waveFormat;
-
-		acmDriverClose(driver, 0);
-
-		return 1;
-	}
-
-	BOOL __stdcall Specimen::formatEnumCallback(HACMDRIVERID driverId, LPACMFORMATDETAILS formatDetails, DWORD dwInstance, DWORD fdwSupport)
-	{
-		if (formatDetails->pwfx->wFormatTag == WAVE_FORMAT_GSM610 &&
-			formatDetails->pwfx->nChannels == 1 &&
-			formatDetails->pwfx->nSamplesPerSec == SampleRate)
-		{
-			Specimen::driverId = driverId;
-		}
-		return 1;
 	}
 }

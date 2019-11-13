@@ -6,6 +6,7 @@
 #include "StateVariableFilter.h"
 #include "SamplePlayer.h"
 
+#ifndef USE_SNDFILE
 #include <Windows.h>
 #include <mmreg.h>
 
@@ -13,6 +14,8 @@
 #define _UNICODE
 #endif
 #include <MSAcm.h>
+#else
+#endif
 
 namespace WaveSabreCore
 {
@@ -70,7 +73,9 @@ namespace WaveSabreCore
 		virtual void SetChunk(void *data, int size);
 		virtual int GetChunk(void **data);
 
+#ifndef USE_SNDFILE
 		void LoadSample(char *data, int compressedSize, int uncompressedSize, WAVEFORMATEX *waveFormat);
+#endif
 
 	private:
 		class SpecimenVoice : public Voice
@@ -99,10 +104,12 @@ namespace WaveSabreCore
 			float velocity;
 		};
 
+#ifndef USE_SNDFILE
 		static BOOL __stdcall driverEnumCallback(HACMDRIVERID driverId, DWORD dwInstance, DWORD fdwSupport);
 		static BOOL __stdcall formatEnumCallback(HACMDRIVERID driverId, LPACMFORMATDETAILS formatDetails, DWORD dwInstance, DWORD fdwSupport);
 
 		static HACMDRIVERID driverId;
+#endif
 
 		char *chunkData;
 

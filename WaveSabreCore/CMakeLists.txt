@@ -20,6 +20,7 @@ set(wscore_sources
 	include/WaveSabreCore/Scissor.h
 	include/WaveSabreCore/Slaughter.h
 	include/WaveSabreCore/Smasher.h
+	include/WaveSabreCore/Specimen.h
 	include/WaveSabreCore/StateVariableFilter.h
 	include/WaveSabreCore/SynthDevice.h
 	include/WaveSabreCore/Twister.h
@@ -44,6 +45,7 @@ set(wscore_sources
 	src/Scissor.cpp
 	src/Slaughter.cpp
 	src/Smasher.cpp
+	src/Specimen.cpp
 	src/StateVariableFilter.cpp
 	src/SynthDevice.cpp
 	src/Twister.cpp)
@@ -51,10 +53,8 @@ set(wscore_sources
 if(WIN32)
 	list(APPEND wscore_sources
 		include/WaveSabreCore/GmDls.h
-		include/WaveSabreCore/Specimen.h
 		include/WaveSabreCore/Thunder.h
 		src/GmDls.cpp
-		src/Specimen.cpp
 		src/Thunder.cpp)
 endif()
 
