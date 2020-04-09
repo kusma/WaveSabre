@@ -63,24 +63,6 @@ static __declspec(naked) float __vectorcall fpuExp2F(float x)
 		ret
 	}
 }
-
-static __declspec(naked) double __vectorcall fpuCos(double x)
-{
-	__asm
-	{
-		sub esp, 8
-
-		movsd mmword ptr [esp], xmm0
-		fld qword ptr [esp]
-		fcos
-		fstp qword ptr [esp]
-		movsd xmm0, mmword ptr [esp]
-
-		add esp, 8
-
-		ret
-	}
-}
 #endif // defined(_MSC_VER) && defined(_M_IX86)
 
 namespace WaveSabreCore
@@ -97,14 +79,15 @@ namespace WaveSabreCore
 	{
 		RandomSeed = 1;
 
+		const double delta = (M_PI * 2) / fastCosTabSize;
+		const double sd = sin(delta), cd = cos(delta);
+		double x = 0, y = 1;
 		for (int i = 0; i < fastCosTabSize + 1; i++)
 		{
-			double phase = double(i) * ((M_PI * 2) / fastCosTabSize);
-#if defined(_MSC_VER) && defined(_M_IX86)
-			fastCosTab[i] = fpuCos(phase);
-#else
-			fastCosTab[i] = cos(phase);
-#endif
+			fastCosTab[i] = y;
+			double tx = x * cd - y * sd;
+			y = x * sd + y * cd;
+			x = tx;
 		}
 	}
 
