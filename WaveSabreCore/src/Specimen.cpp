@@ -2,6 +2,7 @@
 #include <WaveSabreCore/Helpers.h>
 
 #include <math.h>
+#include <string.h>
 
 namespace WaveSabreCore
 {
