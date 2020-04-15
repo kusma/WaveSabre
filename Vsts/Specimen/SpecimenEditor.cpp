@@ -123,33 +123,6 @@ void SpecimenEditor::setParameter(VstInt32 index, float value)
 					input.read((char *)inputBuf, inputSize);
 					input.close();
 
-					if (*((unsigned int *)inputBuf) != 0x46464952) throw exception("Input file missing RIFF header.");
-					if (*((unsigned int *)(inputBuf + 4)) != (unsigned int)inputSize - 8) throw exception("Input file contains invalid RIFF header.");
-					if (*((unsigned int *)(inputBuf + 8)) != 0x45564157) throw exception("Input file missing WAVE chunk.");
-
-					if (*((unsigned int *)(inputBuf + 12)) != 0x20746d66) throw exception("Input file missing format sub-chunk.");
-					if (*((unsigned int *)(inputBuf + 16)) != 16) throw exception("Input file is not a PCM waveform.");
-					auto inputFormat = (LPWAVEFORMATEX)(inputBuf + 20);
-					if (inputFormat->wFormatTag != WAVE_FORMAT_PCM) throw exception("Input file is not a PCM waveform.");
-					if (inputFormat->nChannels != 1) throw exception("Input file is not mono.");
-					if (inputFormat->nSamplesPerSec != Specimen::SampleRate) throw exception(("Input file is not " + to_string(Specimen::SampleRate) + "hz.").c_str());
-					if (inputFormat->wBitsPerSample != sizeof(short) * 8) throw exception("Input file is not 16-bit.");
-
-					int chunkPos = 36;
-					int chunkSizeBytes;
-					while (true)
-					{
-						if (chunkPos >= (int)inputSize) throw exception("Input file missing data sub-chunk.");
-						chunkSizeBytes = *((unsigned int *)(inputBuf + chunkPos + 4));
-						if (*((unsigned int *)(inputBuf + chunkPos)) == 0x61746164) break;
-						else chunkPos += 8 + chunkSizeBytes;
-					}
-					int rawDataLength = chunkSizeBytes / 2;
-					auto rawData = new short[rawDataLength];
-					memcpy(rawData, inputBuf + chunkPos + 8, chunkSizeBytes);
-
-					auto compressedData = new char[chunkSizeBytes];
-
 					int waveFormatSize = 0;
 					acmMetrics(NULL, ACM_METRIC_MAX_SIZE_FORMAT, &waveFormatSize);
 					auto waveFormat = (WAVEFORMATEX *)(new char[waveFormatSize]);
@@ -172,24 +145,27 @@ void SpecimenEditor::setParameter(VstInt32 index, float value)
 					if (acmDriverOpen(&driver, driverId, 0)) throw exception("acmDriverOpen failed");
 
 					HACMSTREAM stream = NULL;
+					auto inputFormat = (LPWAVEFORMATEX)(inputBuf + 20);
 					if (acmStreamOpen(&stream, driver, inputFormat, waveFormat, NULL, NULL, NULL, ACM_STREAMOPENF_NONREALTIME)) throw exception("acmStreamOpen failed");
+
+					DWORD chunkSizeBytes = 0;
+					if (acmStreamSize(stream, (DWORD)inputSize, &chunkSizeBytes, ACM_STREAMSIZEF_DESTINATION)) throw exception("acmStreamSize failed");
+					auto compressedData = new char[(unsigned int)inputSize];
 
 					ACMSTREAMHEADER streamHeader;
 					memset(&streamHeader, 0, sizeof(streamHeader));
 					streamHeader.cbStruct = sizeof(streamHeader);
-					streamHeader.pbSrc = (LPBYTE)rawData;
-					streamHeader.cbSrcLength = chunkSizeBytes;
+					streamHeader.pbSrc = (LPBYTE)inputBuf;
+					streamHeader.cbSrcLength = (DWORD)inputSize;
 					streamHeader.pbDst = (LPBYTE)compressedData;
 					streamHeader.cbDstLength = chunkSizeBytes;
 					if (acmStreamPrepareHeader(stream, &streamHeader, 0)) throw exception("acmStreamPrepareHeader failed");
 					if (acmStreamConvert(stream, &streamHeader, 0)) throw exception("acmStreamConvert failed");
 
-					delete [] rawData;
-
 					acmStreamClose(stream, 0);
 					acmDriverClose(driver, 0);
 
-					specimen->LoadSample(compressedData, streamHeader.cbDstLengthUsed, chunkSizeBytes, waveFormat);
+					specimen->LoadSample(compressedData, streamHeader.cbDstLengthUsed, streamHeader.cbSrcLengthUsed, waveFormat);
 
 					delete [] (char *)waveFormat;
 
